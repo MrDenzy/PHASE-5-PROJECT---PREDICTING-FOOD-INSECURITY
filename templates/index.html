@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kenya Food Insecurity Early Warning System</title>
+
+    <!-- Outfit font — all weights -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Leaflet -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- App styles -->
+    <link rel="stylesheet" href="/static/css/style.css" />
+
+    <style>
+      /* ── Leaflet tooltip reset ────────────────────────────── */
+      .leaflet-tooltip {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .leaflet-tooltip-top::before,
+      .leaflet-tooltip-bottom::before,
+      .leaflet-tooltip-left::before,
+      .leaflet-tooltip-right::before {
+        display: none !important;
+      }
+
+      /* ── IPC pulse ring animation ─────────────────────────── */
+      @keyframes pulse-ring {
+        0% {
+          transform: scale(1);
+          opacity: 0.45;
+        }
+        70% {
+          transform: scale(1.5);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1.5);
+          opacity: 0;
+        }
+      }
+      .pulse-ring {
+        animation: pulse-ring 2.2s ease-out infinite;
+      }
+
+      /* ── SVG gauge font override → Outfit ────────────────── */
+      #gauge-score {
+        font-family: "Outfit", sans-serif !important;
+      }
+      #gauge-risklbl {
+        font-family: "Outfit", sans-serif !important;
+      }
+
+      /* ── County info strip below county selector ─────────── */
+      .county-info-strip {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        margin-top: 6px;
+        font-size: 12px;
+      }
+      .county-info-strip.visible {
+        display: flex;
+      }
+      .cis-badge {
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .cis-badge.high {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+      }
+      .cis-badge.medium {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+      }
+      .cis-badge.low {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+      }
+      .cis-asal {
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(245, 166, 35, 0.15);
+        color: #f5a623;
+      }
+      .price-note {
+        font-size: 10px;
+        color: var(--text-muted);
+        font-style: italic;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app-wrapper">
+      <!-- ══════════════════════════════════════════════════════
+           HEADER
+      ══════════════════════════════════════════════════════ -->
+      <header class="header">
+        <div class="header-brand">
+          <div class="header-icon">🌍</div>
+          <div>
+            <div class="header-title">
+              Kenya Food Insecurity Early Warning System
+            </div>
+            <div class="header-sub">
+              ML-Powered · County Level · IPC Phase Prediction
+            </div>
+          </div>
+        </div>
+
+        <nav class="tab-nav">
+          <button class="tab-btn active" data-tab="map">🗺 County Map</button>
+          <button class="tab-btn" data-tab="predict">🔮 Predict</button>
+          <button class="tab-btn" data-tab="trends">📈 Trends</button>
+        </nav>
+
+        <div class="header-meta">
+          <div class="model-badge">RF · 47 Counties · 2019–2025</div>
+          <div class="status-pill">
+            <div class="status-dot"></div>
+            Live Predictions
+          </div>
+        </div>
+        <button
+          class="theme-toggle"
+          id="theme-toggle"
+          title="Switch to light mode"
+          aria-label="Switch to light mode"
+        >
+          <span id="theme-icon">☀️</span>
+        </button>
+      </header>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 1 — COUNTY MAP
+      ══════════════════════════════════════════════════════ -->
+      <main class="main-content tab-content active" id="tab-map">
+        <div class="map-panel">
+          <div class="map-header">
+            <span class="panel-title">County Risk Map</span>
+            <div class="map-controls">
+              <button class="ctrl-btn active" id="btn-all">All</button>
+              <button class="ctrl-btn" id="btn-insecure">⚠ At Risk</button>
+              <button class="ctrl-btn" id="btn-secure">✓ Secure</button>
+            </div>
+          </div>
+
+          <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading county data…</div>
+          </div>
+
+          <div id="kenya-map"></div>
+
+          <div class="map-legend">
+            <span class="legend-label">IPC Phase</span>
+            <div class="legend-scale">
+              <div
+                class="legend-swatch"
+                style="background: #cdfacd"
+                title="Phase 1 – Minimal"
+              ></div>
+              <div
+                class="legend-swatch"
+                style="background: #fae61e"
+                title="Phase 2 – Stressed"
+              ></div>
+              <div
+                class="legend-swatch"
+                style="background: #e67800"
+                title="Phase 3 – Crisis"
+              ></div>
+              <div
+                class="legend-swatch"
+                style="background: #c80000"
+                title="Phase 4 – Emergency"
+              ></div>
+              <div
+                class="legend-swatch"
+                style="background: #640000"
+                title="Phase 5 – Famine"
+              ></div>
+            </div>
+            <span class="legend-tick">Ph 1</span>
+            <span class="legend-tick" style="margin-left: auto">Ph 5</span>
+            <div class="threshold-line">
+              <div class="threshold-dash"></div>
+              <span class="threshold-text">threshold = 0.45</span>
+            </div>
+          </div>
+        </div>
+
+        <aside class="sidebar">
+          <div class="sidebar-section">
+            <div class="section-label">Assessment Summary</div>
+            <div class="summary-grid">
+              <div class="summary-card">
+                <div class="sc-value insecure" id="count-insecure">—</div>
+                <div class="sc-label">At Risk Counties</div>
+              </div>
+              <div class="summary-card">
+                <div class="sc-value secure" id="count-secure">—</div>
+                <div class="sc-label">Secure Counties</div>
+              </div>
+              <div class="summary-card">
+                <div class="sc-value recall" id="val-recall">—</div>
+                <div class="sc-label">Model Recall</div>
+              </div>
+              <div class="summary-card">
+                <div class="sc-value auc" id="val-auc">—</div>
+                <div class="sc-label">ROC-AUC</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="county-detail" id="county-detail">
+            <div class="cd-header">
+              <div class="cd-name" id="cd-name">—</div>
+              <div class="cd-badge" id="cd-badge">—</div>
+            </div>
+            <div class="cd-gauge-wrap">
+              <div class="cd-gauge-label">
+                <span>Risk Score</span>
+                <span id="cd-score-val">—</span>
+              </div>
+              <div class="cd-gauge-track">
+                <div
+                  class="cd-gauge-fill"
+                  id="cd-gauge-fill"
+                  style="width: 0%"
+                ></div>
+                <div class="cd-gauge-threshold" id="cd-gauge-threshold"></div>
+              </div>
+            </div>
+            <div class="cd-gauge-label" style="margin-top: 8px">
+              <span
+                style="
+                  font-family: var(--font-mono);
+                  font-size: 10px;
+                  color: var(--text-muted);
+                "
+                >Historical Crisis Rate</span
+              >
+              <span
+                style="
+                  font-family: var(--font-mono);
+                  font-size: 11px;
+                  color: var(--text);
+                "
+                id="cd-crisis-rate"
+                >—</span
+              >
+            </div>
+          </div>
+
+          <div class="sidebar-section" style="padding-bottom: 8px">
+            <div class="section-label">Counties · Sorted by Risk</div>
+          </div>
+          <div class="county-list" id="county-list"></div>
+
+          <div class="sidebar-section" style="margin-top: auto">
+            <div class="section-label">Model Performance</div>
+            <div class="metrics-strip">
+              <div class="metric-item">
+                <div class="metric-val">0.875</div>
+                <div class="metric-label">Recall</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-val">0.424</div>
+                <div class="metric-label">Precision</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-val">0.571</div>
+                <div class="metric-label">F1</div>
+              </div>
+              <div class="metric-item">
+                <div class="metric-val" style="color: var(--accent)">0.898</div>
+                <div class="metric-label">AUC</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 2 — PREDICTION PANEL
+      ══════════════════════════════════════════════════════ -->
+      <main class="main-content tab-content" id="tab-predict">
+        <div class="predict-layout">
+          <!-- LEFT: Input form -->
+          <div class="predict-form-panel">
+            <div class="predict-header">
+              <div class="panel-title">County Risk Predictor</div>
+              <div class="predict-sub">
+                Select a county and answer 4 simple questions to get a food
+                insecurity prediction
+              </div>
+            </div>
+
+            <!-- 1. County selector -->
+            <div class="form-section">
+              <div class="form-section-label">📍 Select County</div>
+              <select class="county-select" id="predict-county">
+                <option value="">— Choose a county —</option>
+                <option>Mombasa</option>
+                <option>Kwale</option>
+                <option>Kilifi</option>
+                <option>Tana River</option>
+                <option>Lamu</option>
+                <option>Taita Taveta</option>
+                <option>Garissa</option>
+                <option>Wajir</option>
+                <option>Mandera</option>
+                <option>Marsabit</option>
+                <option>Isiolo</option>
+                <option>Meru</option>
+                <option>Tharaka Nithi</option>
+                <option>Embu</option>
+                <option>Kitui</option>
+                <option>Machakos</option>
+                <option>Makueni</option>
+                <option>Nyandarua</option>
+                <option>Nyeri</option>
+                <option>Kirinyaga</option>
+                <option>Murang'a</option>
+                <option>Kiambu</option>
+                <option>Turkana</option>
+                <option>West Pokot</option>
+                <option>Samburu</option>
+                <option>Trans Nzoia</option>
+                <option>Uasin Gishu</option>
+                <option>Elgeyo Marakwet</option>
+                <option>Nandi</option>
+                <option>Baringo</option>
+                <option>Laikipia</option>
+                <option>Nakuru</option>
+                <option>Narok</option>
+                <option>Kajiado</option>
+                <option>Kericho</option>
+                <option>Bomet</option>
+                <option>Kakamega</option>
+                <option>Vihiga</option>
+                <option>Bungoma</option>
+                <option>Busia</option>
+                <option>Siaya</option>
+                <option>Kisumu</option>
+                <option>Homa Bay</option>
+                <option>Migori</option>
+                <option>Kisii</option>
+                <option>Nyamira</option>
+                <option>Nairobi</option>
+              </select>
+
+              <!-- County info strip — auto-fills on county select -->
+              <div class="county-info-strip" id="county-info-strip">
+                <span style="font-size: 11px; color: var(--text-muted)"
+                  >Poverty Level:</span
+                >
+                <span class="cis-badge" id="cis-poverty">—</span>
+                <span id="cis-asal-wrap" style="display: none">
+                  <span class="cis-asal">ASAL County</span>
+                </span>
+                <span
+                  style="
+                    font-size: 11px;
+                    color: var(--text-muted);
+                    margin-left: auto;
+                  "
+                  >Vulnerability: <strong id="cis-vuln">—</strong></span
+                >
+              </div>
+
+              <button class="autofill-btn" id="btn-autofill">
+                ⚡ Auto-fill defaults
+              </button>
+            </div>
+
+            <!-- 2. Previous crisis -->
+            <div class="form-section">
+              <div class="form-section-label">📊 Previous Crisis Status</div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label
+                    >Was this county in food crisis in the last
+                    assessment?</label
+                  >
+                  <select id="f-previous_crisis">
+                    <option value="No">No — food secure</option>
+                    <option value="Yes">Yes — was in crisis</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Rainfall -->
+            <div class="form-section">
+              <div class="form-section-label">🌧 Rainfall Conditions</div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label>Rainfall last month compared to normal</label>
+                  <select id="f-rainfall_last_month">
+                    <option value="Much Below Normal">
+                      Much Below Normal (severe drought)
+                    </option>
+                    <option value="Below Normal">Below Normal (dry)</option>
+                    <option value="Normal" selected>Normal</option>
+                    <option value="Above Normal">Above Normal (wet)</option>
+                    <option value="Much Above Normal">
+                      Much Above Normal (flooding risk)
+                    </option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>Rainfall 3 months ago compared to normal</label>
+                  <select id="f-rainfall_3months_ago">
+                    <option value="Much Below Normal">
+                      Much Below Normal (severe drought)
+                    </option>
+                    <option value="Below Normal">Below Normal (dry)</option>
+                    <option value="Normal" selected>Normal</option>
+                    <option value="Above Normal">Above Normal (wet)</option>
+                    <option value="Much Above Normal">
+                      Much Above Normal (flooding risk)
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Food prices -->
+            <div class="form-section">
+              <div class="form-section-label">🌽 Food Basket Cost</div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label>Current cost of maize + beans in local markets</label>
+                  <select id="f-food_basket_level">
+                    <option value="Affordable">
+                      🟢 Affordable — below normal price
+                    </option>
+                    <option value="Moderate" selected>
+                      🟡 Moderate — around normal price
+                    </option>
+                    <option value="Elevated">
+                      🟠 Elevated — above normal price
+                    </option>
+                    <option value="High">
+                      🔴 High — well above normal price
+                    </option>
+                  </select>
+                  <div class="price-note" id="price-band-note"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Month -->
+            <div class="form-section">
+              <div class="form-section-label">📅 Assessment Month</div>
+              <div class="form-grid">
+                <div class="form-field">
+                  <label>Which month are you assessing?</label>
+                  <select id="f-month">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7" selected>July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <button class="predict-btn" id="btn-predict">
+              <span class="predict-btn-text">Run Prediction</span>
+              <span class="predict-btn-icon">→</span>
+            </button>
+          </div>
+
+          <!-- RIGHT: Result panel -->
+          <div class="predict-result-panel">
+            <div class="result-empty" id="result-empty">
+              <div class="result-empty-icon">🔮</div>
+              <div class="result-empty-title">Awaiting Input</div>
+              <div class="result-empty-sub">
+                Select a county and click Run Prediction to see the model's
+                assessment
+              </div>
+            </div>
+
+            <div class="result-card" id="result-card" style="display: none">
+              <div class="result-county" id="res-county">—</div>
+
+              <div class="result-gauge-wrap">
+                <svg class="result-gauge" viewBox="0 0 200 110">
+                  <path
+                    d="M 20 100 A 80 80 0 0 1 180 100"
+                    fill="none"
+                    stroke="rgba(255,255,255,0.06)"
+                    stroke-width="16"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    id="gauge-arc"
+                    d="M 20 100 A 80 80 0 0 1 180 100"
+                    fill="none"
+                    stroke="#CDFACD"
+                    stroke-width="16"
+                    stroke-linecap="round"
+                    stroke-dasharray="251.2"
+                    stroke-dashoffset="251.2"
+                    style="
+                      transition:
+                        stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                        stroke 0.5s;
+                    "
+                  />
+                  <line
+                    id="gauge-threshold"
+                    x1="100"
+                    y1="20"
+                    x2="100"
+                    y2="36"
+                    stroke="#F5A623"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                  <text
+                    x="100"
+                    y="82"
+                    text-anchor="middle"
+                    font-family="'Outfit', sans-serif"
+                    font-size="28"
+                    font-weight="800"
+                    fill="#f0ede6"
+                    id="gauge-score"
+                  >
+                    —
+                  </text>
+                  <text
+                    x="100"
+                    y="98"
+                    text-anchor="middle"
+                    font-family="'Outfit', sans-serif"
+                    font-size="9"
+                    font-weight="500"
+                    fill="#7a9170"
+                    letter-spacing="2"
+                    id="gauge-risklbl"
+                  >
+                    RISK SCORE
+                  </text>
+                </svg>
+              </div>
+
+              <div class="result-verdict" id="res-verdict">—</div>
+              <div class="result-level" id="res-level">—</div>
+
+              <!-- Disclaimer for counties with no IPC history -->
+              <div
+                id="res-disclaimer"
+                style="
+                  display: none;
+                  font-size: 11px;
+                  color: var(--accent);
+                  text-align: center;
+                  margin: 6px 0;
+                  padding: 6px 12px;
+                  background: rgba(245, 166, 35, 0.08);
+                  border-radius: 6px;
+                "
+              ></div>
+
+              <div class="factors-section">
+                <div class="factors-title">Key Driving Factors</div>
+                <div id="factors-list"></div>
+              </div>
+
+              <div class="result-model-info" id="res-model-info">—</div>
+            </div>
+
+            <div
+              class="result-loading"
+              id="result-loading"
+              style="display: none"
+            >
+              <div class="loading-spinner"></div>
+              <div class="loading-text">Running model…</div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 3 — TRENDS
+      ══════════════════════════════════════════════════════ -->
+      <main class="main-content tab-content" id="tab-trends">
+        <div class="trends-layout">
+          <div class="trends-topbar">
+            <div class="trends-topbar-left">
+              <div class="panel-title">County Trends</div>
+              <div class="trends-sub">
+                Historical IPC phase data · 2019–2025
+              </div>
+            </div>
+            <div class="trends-topbar-right">
+              <span class="trend-select-label">County</span>
+              <select class="trend-county-select" id="trend-county-select">
+                <option value="">All Counties</option>
+                <option>Mombasa</option>
+                <option>Kwale</option>
+                <option>Kilifi</option>
+                <option>Tana River</option>
+                <option>Lamu</option>
+                <option>Taita Taveta</option>
+                <option>Garissa</option>
+                <option>Wajir</option>
+                <option>Mandera</option>
+                <option>Marsabit</option>
+                <option>Isiolo</option>
+                <option>Meru</option>
+                <option>Tharaka Nithi</option>
+                <option>Embu</option>
+                <option>Kitui</option>
+                <option>Machakos</option>
+                <option>Makueni</option>
+                <option>Nyandarua</option>
+                <option>Nyeri</option>
+                <option>Kirinyaga</option>
+                <option>Murang'a</option>
+                <option>Kiambu</option>
+                <option>Turkana</option>
+                <option>West Pokot</option>
+                <option>Samburu</option>
+                <option>Trans Nzoia</option>
+                <option>Uasin Gishu</option>
+                <option>Elgeyo Marakwet</option>
+                <option>Nandi</option>
+                <option>Baringo</option>
+                <option>Laikipia</option>
+                <option>Nakuru</option>
+                <option>Narok</option>
+                <option>Kajiado</option>
+                <option>Kericho</option>
+                <option>Bomet</option>
+                <option>Kakamega</option>
+                <option>Vihiga</option>
+                <option>Bungoma</option>
+                <option>Busia</option>
+                <option>Siaya</option>
+                <option>Kisumu</option>
+                <option>Homa Bay</option>
+                <option>Migori</option>
+                <option>Kisii</option>
+                <option>Nyamira</option>
+                <option>Nairobi</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="trend-stats">
+            <div class="trend-stat-card">
+              <div class="tsc-value insecure" id="trend-peak">—</div>
+              <div class="tsc-label">Peak Risk Score</div>
+            </div>
+            <div class="trend-stat-card">
+              <div
+                class="tsc-value"
+                id="trend-avg"
+                style="color: var(--accent)"
+              >
+                —
+              </div>
+              <div class="tsc-label">Avg Risk Score</div>
+            </div>
+            <div class="trend-stat-card">
+              <div class="tsc-value insecure" id="trend-months">—</div>
+              <div class="tsc-label">Months in Crisis+</div>
+            </div>
+            <div class="trend-stat-card">
+              <div
+                class="tsc-value"
+                id="trend-trend"
+                style="color: var(--green2)"
+              >
+                —
+              </div>
+              <div class="tsc-label">6-Month Trend</div>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-card chart-card-wide">
+              <div class="chart-card-header">
+                <span class="chart-title">Risk Score Over Time</span>
+                <div class="chart-legend-items">
+                  <div class="chart-legend-item">
+                    <div class="cli-dot" style="background: #c80000"></div>
+                    <span>Actual IPC</span>
+                  </div>
+                  <div class="chart-legend-item">
+                    <div class="cli-dot" style="background: #f5a623"></div>
+                    <span>ML Prediction</span>
+                  </div>
+                  <div class="chart-legend-item">
+                    <div
+                      class="cli-dot"
+                      style="
+                        background: #fae61e;
+                        width: 14px;
+                        height: 2px;
+                        border-radius: 1px;
+                      "
+                    ></div>
+                    <span>Threshold</span>
+                  </div>
+                </div>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chart-timeseries"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <span class="chart-title">IPC Phase Distribution</span>
+              </div>
+              <div class="chart-wrap"><canvas id="chart-phases"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-card-header">
+                <span class="chart-title">Feature Importance</span>
+              </div>
+              <div class="chart-wrap">
+                <canvas id="chart-importance"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/static/js/map.js"></script>
+    <script src="/static/js/predict.js"></script>
+    <script src="/static/js/trends.js"></script>
+    <script src="/static/js/theme.js"></script>
+
+    <!-- Tab switching -->
+    <script>
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tab = btn.dataset.tab;
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          document
+            .querySelectorAll(".tab-content")
+            .forEach((el) => el.classList.remove("active"));
+          document.getElementById("tab-" + tab).classList.add("active");
+          if (tab === "map" && typeof map !== "undefined" && map) {
+            setTimeout(() => map.invalidateSize(), 50);
+          }
+          // Init trends charts when tab opens
+          if (tab === "trends" && typeof initTrends === "function") {
+            initTrends();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

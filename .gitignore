@@ -1,21 +1,47 @@
-# Data files
+# ── Data ──────────────────────────────────────────────────────
 data/raw/
 data/processed/
+data/pickle/
 
-# Jupyter Notebook checkpoints
+# ── Models (large binary files — use Git LFS or exclude) ──────
+# Comment these out if you WANT to push your trained models
+models/*.pkl
+models/*.joblib
+
+# Keep model metadata and feature list (small, useful for docs)
+!models/model_metadata.json
+!models/top_features.json
+
+# ── Notebooks ─────────────────────────────────────────────────
 .ipynb_checkpoints/
 */.ipynb_checkpoints/
+# Uncomment below if you want to exclude notebooks entirely
+# notebooks/
+# *.ipynb
 
-# Python
+# ── Python ────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Environments ──────────────────────────────────────────────
 .env
+.env.*
 venv/
 env/
+.venv/
 
-# VS Code
+# ── VS Code ───────────────────────────────────────────────────
 .vscode/
 
-# OS files
+# ── OS files ──────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ── Logs & temp ───────────────────────────────────────────────
+*.log
+*.tmp
+*.cache

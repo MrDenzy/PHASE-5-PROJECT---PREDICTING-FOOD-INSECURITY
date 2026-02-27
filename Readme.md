@@ -32,22 +32,19 @@ The app has three pages:
 | 📈 **Trends** | Historical food insecurity journey per county from 2019–2025 |
 
 > 📷 **Screenshot — County Risk Map**  
-> images/map_screenshot.png
-> ```
+> 
 > ![County Risk Map](images/map_screenshot.png)
-> ```
+> 
 
 > 📷 **Screenshot — Predict Tab**  
-> images/predict_screenshot.png
-> ```
+> 
 > ![Predict Tab](images/predict_screenshot.png)
-> ```
+> 
 
 > 📷 **Screenshot — Trends Tab**  
-> images/trends_screenshot.png
-> ```
+> 
 > ![Trends Tab](images/trends_screenshot.png)
-> ```
+> 
 
 ---
 
@@ -63,17 +60,15 @@ The app has three pages:
 
 > **Why recall matters:** In humanitarian work, missing a real crisis is far more costly than a false alarm. We optimized for recall — the model would rather flag a county incorrectly than miss a genuine food emergency.
 
-> 📷 **Add graph here: Confusion Matrix**  
-> images/confusion_matrix.png
-> ```
-> ![Confusion Matrix](images/confusion_matrix.png)
-> ```
+> 📷 ** Confusion Matrix**  
 
-> 📷 **Add graph here: ROC Curve**  
-> images/roc_curve.png
-> ```
+> ![Confusion Matrix](images/confusion_matrix.png)
+
+
+> 📷 ** ROC Curve**  
+
 > ![ROC Curve](images/roc_curve.png)
-> ```
+
 
 ---
 
@@ -135,10 +130,9 @@ The app has three pages:
 | `region_*` | 6 one-hot encoded region dummies |
 
 > 📷 **Add graph here: Feature Importance**  
-> images/feature_importance.png
-> ```
+
 > ![Feature Importance](images/feature_importance.png)
-> ```
+
 
 ---
 
@@ -178,17 +172,16 @@ Final Model: Random Forest (Tuned, Simplified)
 | XGBoost (Tuned) | 0.812 | 0.433 | 0.564 | 0.872 |
 | **RF Tuned Simplified** | **0.875** | **0.424** | **0.571** | **0.898** |
 
-> 📷 **Add graph here: Model Comparison Chart**  
-> *(From notebook Section 5.4: `images/model_comparison.png`)*
-> ```
+> 📷 **Model Comparison Chart**  
+>
+ 
 > ![Model Comparison](images/model_comparison.png)
-> ```
+> 
 
-> 📷 **Add graph here: Threshold Analysis**  
-> *(From notebook Section 5.5: `images/threshold_analysis.png`)*
-> ```
+> 📷 **Threshold Analysis**  
+ 
 > ![Threshold Analysis](images/threshold_analysis.png)
-> ```
+> 
 
 ---
 
@@ -202,17 +195,15 @@ SHAP (SHapley Additive exPlanations) was used to explain individual model predic
 2. **`vulnerability_score`** — Structural poverty creates a chronic baseline of risk that amplifies every climate or price shock.
 3. **`anomaly_lag1m`** — Rainfall deficit from last month is the strongest climate predictor — not current rainfall, but what happened recently.
 
-> 📷 **Add graph here: SHAP Summary Plot**  
-> *(From notebook Section 5.9.2: `images/shap_summary.png`)*
-> ```
+> 📷 **SHAP Summary Plot**  
+> 
 > ![SHAP Summary](images/shap_summary.png)
-> ```
+>
 
-> 📷 **Add graph here: SHAP Waterfall — Most Insecure Prediction**  
-> *(From notebook Section 5.9.4: `images/shap_waterfall_insecure.png`)*
-> ```
-> ![SHAP Waterfall](images/shap_waterfall_insecure.png)
-> ```
+> 📷 **SHAP Waterfall — Most Insecure Prediction**  
+> 
+> ![SHAP Waterfall](images/shap_most_insecure.png)
+> 
 
 ---
 

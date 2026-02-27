@@ -32,19 +32,19 @@ The app has three pages:
 | 📈 **Trends** | Historical food insecurity journey per county from 2019–2025 |
 
 > 📷 **Screenshot — County Risk Map**  
-> *(Add your map screenshot here: `images/map_screenshot.png`)*
+> images/map_screenshot.png
 > ```
 > ![County Risk Map](images/map_screenshot.png)
 > ```
 
 > 📷 **Screenshot — Predict Tab**  
-> *(Add your predict tab screenshot here: `images/predict_screenshot.png`)*
+> images/predict_screenshot.png
 > ```
 > ![Predict Tab](images/predict_screenshot.png)
 > ```
 
 > 📷 **Screenshot — Trends Tab**  
-> *(Add your trends tab screenshot here: `images/trends_screenshot.png`)*
+> images/trends_screenshot.png
 > ```
 > ![Trends Tab](images/trends_screenshot.png)
 > ```
@@ -64,13 +64,13 @@ The app has three pages:
 > **Why recall matters:** In humanitarian work, missing a real crisis is far more costly than a false alarm. We optimized for recall — the model would rather flag a county incorrectly than miss a genuine food emergency.
 
 > 📷 **Add graph here: Confusion Matrix**  
-> *(From notebook Section 5.1: `images/confusion_matrix.png`)*
+> images/confusion_matrix.png
 > ```
 > ![Confusion Matrix](images/confusion_matrix.png)
 > ```
 
 > 📷 **Add graph here: ROC Curve**  
-> *(From notebook Section 5.1: `images/roc_curve.png`)*
+> images/roc_curve.png
 > ```
 > ![ROC Curve](images/roc_curve.png)
 > ```
@@ -135,7 +135,7 @@ The app has three pages:
 | `region_*` | 6 one-hot encoded region dummies |
 
 > 📷 **Add graph here: Feature Importance**  
-> *(From notebook Section 4.6: `images/feature_importance.png`)*
+> images/feature_importance.png
 > ```
 > ![Feature Importance](images/feature_importance.png)
 > ```

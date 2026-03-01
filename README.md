@@ -19,9 +19,9 @@ this project builds a predictive model that supports forward-looking humanitaria
 
 The analytical framework aligns with institutions such as:
 
-- :contentReference[oaicite:1]{index=1} (WFP)  
-- :contentReference[oaicite:2]{index=2} (FAO)  
-- :contentReference[oaicite:3]{index=3} (FEWS NET)
+- World Food Programme(WFP)  
+- Food and Agriculture Organization(FAO)  
+- Famine Early Warning Systems Network(FEWS NET)
 
 ---
 
@@ -66,7 +66,7 @@ All datasets were harmonized into a **county–month panel (2015–2025).**
 
 ### 1️⃣ IPC Classifications (Target Variable)
 
-Source: :contentReference[oaicite:4]{index=4}  
+Source: https://www.ipcinfo.org/
 
 - Original quarterly IPC phases expanded to monthly frequency  
 - Binary Target:
@@ -77,7 +77,7 @@ Source: :contentReference[oaicite:4]{index=4}
 
 ### 2️⃣ Environmental Indicators (Climate & Vegetation)
 
-Source: :contentReference[oaicite:5]{index=5} – Vulnerability Analysis and Mapping (VAM)
+Source: https://dataviz.vam.wfp.org/
 
 **Rainfall Indicators**
 - `r1q`: 1-month rainfall anomaly ratio  
@@ -92,9 +92,7 @@ Source: :contentReference[oaicite:5]{index=5} – Vulnerability Analysis and Map
 
 ### 3️⃣ Food Prices (Market Access)
 
-Source:  
-- :contentReference[oaicite:6]{index=6}  
-- :contentReference[oaicite:7]{index=7}  
+Source: https://price.vam.wfp.org/
 
 - Monthly maize retail price per kg  
 - Lag features  
@@ -106,7 +104,7 @@ Maize is used as a proxy for household food access.
 
 ### 4️⃣ Conflict Events (Instability)
 
-Source: :contentReference[oaicite:8]{index=8}  
+Source: https://acleddata.com/
 
 - Monthly county-level:
   - Event counts  
@@ -195,16 +193,24 @@ Handled using:
 
 ---
 
-## 🥇 Champion Model: Random Forest
+## 🥇 Champion Model: Tuned Balanced Random Forest
 
-The Random Forest model was selected for deployment.
+The Tuned Random Forest model was selected for deployment.
 
 ### Why?
 
 - ✔ Recall = 1.00 (Zero missed crises)  
 - ✔ Best Precision among high-recall models  
 - ✔ Strong PR-AUC  
-- ✔ Robust to nonlinear relationships  
+- ✔ Robust to nonlinear relationships
+
+### it offers:
+
+- Strong crisis detection capability
+- Reduced false alarms compared to baseline
+- Controlled overfitting
+- Time-aware validation robustness
+- Stable real-world deployment behavior
 
 ---
 
@@ -259,29 +265,33 @@ Future work:
 ## 📁 Repository Structure
 
 ```
+├── Presentation/
+│   ├── Hugging Face Deployment.txt
+│   ├── presentation.pptx
 ├── data/
 │   ├── cleaned_ipc_final.csv
+│   ├── cleaned_dataset.csv
 │   ├── cleaned_rain.csv
 │   ├── cleaned_ndvi.csv
 │   ├── cleaned_conflicts.csv
 │   ├── cleaned_food_prices.csv
-│
+│   ├── ipc_ken_area_long.csv
+│   ├── ken_rainfall_subnat_full.csv
+│   ├── ken_mpi.csv
+│   ├── kenya_political_violence_events_and_fatalities.csv
+│   ├── wfp_food_prices_ken.csv
 ├── notebooks/
-│   ├── data_explore.ipynb
-│   ├── modeling.ipynb
+│   ├── main.ipynb
+│   ├── blex.ipynb
+│   ├── dennis.ipynb
+│   ├── model.pkl
 │
 ├── README.md
 ```
 
----
-
-## 📜 License
-
-Open-access data sources used for academic and humanitarian analytics purposes.
+## 👤 Authors: Blex Olonde, Dennis Muriungi, Shem Omondi, Jasho Kiplangat, Valary Kones
 
 ---
-
-## 👤 Author
 
 Humanitarian Data Science Project  
 Early Warning Modeling for Kenya  

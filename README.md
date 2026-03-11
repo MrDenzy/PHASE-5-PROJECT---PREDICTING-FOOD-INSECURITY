@@ -3,9 +3,9 @@
 
 ---
 
-## 🌍 Project Overview
+## 🌍 Project Overview 
 
-This project develops a **county-level early warning system** to predict acute food insecurity (IPC Phase 3 or worse) in Kenya one month ahead.
+This project develops a **county-level early warning system** to predict acute food insecurity (IPC Phase 3 or worse) in Kenya one month ahead. **streamlit Dashboard.** https://huggingface.co/spaces/mcshoja/FoodInsecurityDashboard
 
 Current food security assessments under the :contentReference[oaicite:0]{index=0} (IPC) primarily describe past conditions. This limits proactive humanitarian action.
 

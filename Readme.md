@@ -1,4 +1,4 @@
-# 🇰🇪 Kenya Food Insecurity Early Warning System
+#  Kenya Food Insecurity Early Warning System
 
 > **ML-Powered · County Level · IPC Phase Prediction**  
 > Random Forest Classifier · 47 Counties · 2019–2025
@@ -226,6 +226,9 @@ Kenya/
 ├── data/
 │   ├── raw/                    ← Original datasets (excluded from GitHub)
 │   └── processed/              ← Cleaned and merged datasets
+├── Presentations/
+│   ├── Kenya food insecurity.pdf/           ← notebook pdf
+│   └── Kenya_food_insecurity_pesentation/   ← Powerpoint presenation
 ├── models/
 │   ├── rf_food_insecurity_model.pkl   ← Trained Random Forest
 │   ├── scaler.pkl                     ← StandardScaler
@@ -327,10 +330,6 @@ scikit-learn==1.5.2
 ## 👥 Authors  
 
 - [Blex Olonde](https://github.com/blexolonde)
-- [Dennis Muriungi](https://github.com/MrDenzy)
-- [Shem Omondi](https://github.com/OmondiOmolo)
-- [Jasho Kiplangat](https://github.com/mcshoja)
-- [Valary Kones](https://github.com/vkones)
 
 **Moringa School — Phase 5 Capstone Project**  
 Group 5 · Data Science · 2025/2026
